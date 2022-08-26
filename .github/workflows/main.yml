@@ -88,6 +88,11 @@ jobs:
   simple_check:
     needs: matrix_deploy
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        host: [34.89.38.139, 34.89.73.57]
+    
     steps:
       - run: |
           curl -v ${{ matrix.host }}
