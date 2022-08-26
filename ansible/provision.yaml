@@ -26,3 +26,9 @@
             - net-tools
             - docker.io
             - docker-compose
+
+      - name: Add "$USER" user to "docker" group
+        ansible.builtin.user:
+          name: "ansible"
+          groups: "docker"
+          append: yes

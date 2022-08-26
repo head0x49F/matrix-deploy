@@ -85,8 +85,10 @@ jobs:
             --name flask-app \
             ${{ env.REGISTRY }}:${{ needs.build_and_push.outputs.commit_hash }}
 
-
-        run: |
+  simple_check:
+    runs-on: ubuntu-latest
+    steps:
+      - run: |
           curl -v ${{ matrix.host }}
 
 
