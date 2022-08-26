@@ -86,3 +86,8 @@ jobs:
             ${{ env.REGISTRY }}:${{ needs.build_and_push.outputs.commit_hash }}
 
 
+        run: |
+          curl -v ${{ matrix.host }}
+
+
+
