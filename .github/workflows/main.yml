@@ -86,6 +86,7 @@ jobs:
             ${{ env.REGISTRY }}:${{ needs.build_and_push.outputs.commit_hash }}
 
   simple_check:
+    needs: matrix_deploy
     runs-on: ubuntu-latest
     steps:
       - run: |
