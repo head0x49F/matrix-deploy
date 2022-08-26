@@ -1,0 +1,88 @@
+name: Build and Deploy to Google Compute Engine
+
+on:
+  push:
+    branches:
+    - main
+  workflow_dispatch:
+
+env:
+  TAG: ${{ github.sha }}
+  REGISTRY: 0xforx/ci-cd-flask-app
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    name: Lint
+    steps:
+
+      - name: Git checkout
+        uses: actions/checkout@v3
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+
+      - name: flake8 Lint
+        uses: py-actions/flake8@v2
+
+  build_and_push:
+    runs-on: ubuntu-latest
+    name: Build and push docker image
+    needs: lint
+    outputs:
+      commit_hash: ${{ steps.commit_hash.outputs.commit_hash }}
+    steps:
+
+      - name: Git checkout
+        uses: actions/checkout@v3
+
+      - id: commit_hash
+        run: echo "::set-output name=commit_hash::${GITHUB_SHA::7}"
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Build and push
+        uses: docker/build-push-action@v3
+        with:
+          context: .
+          push: true
+          tags: |
+            ${{ env.REGISTRY }}:${{ steps.commit_hash.outputs.commit_hash }}
+
+  matrix_deploy:
+    runs-on: ubuntu-latest
+    name: Deploy
+    needs: build_and_push
+    strategy:
+      fail-fast: false
+      matrix:
+        host: [34.89.38.139, 34.89.73.57]
+      
+    steps:
+      - name: Deploy to GCE instanse via SSH action
+        uses: appleboy/ssh-action@v0.1.5
+        with:
+          host: ${{ matrix.host }}
+          username: ansible
+          key: ${{ secrets.GCP_SSH_PRIVATE_KEY }}
+          envs: ${{ secrets.DOCKER_USER }}, ${{ secrets.DOCKERHUB_TOKEN }}
+          port: 22
+          script: |
+            # login docker
+            docker login -u $DOCKER_USER -p $DOCKERHUB_TOKEN
+            docker stop flask-app
+            docker rm flask-app
+            # Run a new container from a new image
+            docker run -d \
+            --restart always \
+            -p 80:5000 \
+            --name flask-app \
+            ${{ env.REGISTRY }}:${{ needs.build_and_push.outputs.commit_hash }}
+
+
