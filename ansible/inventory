@@ -1,0 +1,3 @@
+[my_servers]
+first  ansible_host=34.89.38.139
+second ansible_host=34.89.73.57

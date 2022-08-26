@@ -1,0 +1,28 @@
+  - hosts: my_servers
+    remote_user: ansible
+    become: true
+    become_method: sudo
+    gather_facts: yes
+
+    tasks:
+      - name: Update packages
+        ansible.builtin.apt:
+          update_cache: yes
+          name: "*"
+          state: latest
+
+      - name: Install a list of packages
+        ansible.builtin.apt:
+          pkg:
+            - gnupg2
+            - ca-certificates
+            - lsb-release
+            - mc
+            - htop
+            - curl
+            - wget
+            - git
+            - micro
+            - net-tools
+            - docker.io
+            - docker-compose
